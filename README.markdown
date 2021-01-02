@@ -1,18 +1,27 @@
-Shync - Shopify Email Template Syncer
-=====================================
+Shync - Shopify Email Template Sync Client
+==========================================
 
-Shync can download the Shopify email templates from your Shopify store admin to your local machine,
-and upload (or sync) your email templates on your local machine to Shopify.
+Shync can checkout/download the Shopify email templates from your Shopify store admin to your local machine,
+and push/sync your email templates on your local machine to Shopify.
 
 How to use
 ==========
 
 ```
-# Download email templates from Shopify to templates directory
-% shync download --to templates
+# Checkout email templates from Shopify to templates directory
+% shync checkout --all templates
 
-# Upload email templates from templates directory to Shopify
-% shync sync --from templates
+# Checkout one or more email templates from Shopify to templates directory
+% shync checkout --id order_confirmation --id order_edited templates
+
+# List the email template IDs
+% shync ids
+
+# Push all email templates in the templates directory to Shopify
+% shync push --all templates
+
+# Push one or more email templates in the templates directory to Shopify
+% shync push --id order_confirmation --id order_edited templates
 ```
 
 Configuration
