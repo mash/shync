@@ -35,3 +35,12 @@ var (
 		"new_order_notification",          // 新しい注文
 	}
 )
+
+func IsValid(id string) bool {
+	for _, v := range Templates {
+		if v == id {
+			return true
+		}
+	}
+	return false
+}

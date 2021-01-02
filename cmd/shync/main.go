@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/mash/shync"
 	"github.com/mash/shync/cmd/mw"
 	"github.com/mash/shync/log"
@@ -30,7 +31,7 @@ var (
 	ids = app.Command("ids", "Show email template ids")
 
 	checkout          = app.Command("checkout", "Download email templates into a directory")
-	checkoutTo        = checkout.Flag("to", "Output directory, or - for stdout").Default(".").Envar("SHYNC_OUTDIR").Short('o').String()
+	checkoutTo        = checkout.Arg("to", "Output directory, or - for stdout").Default(".").Envar("SHYNC_OUTDIR").String()
 	checkoutAll       = checkout.Flag("all", "Download all email templates").Short('a').Bool()
 	checkoutTemplates = checkout.Flag("id", "Email template identifier to download").Short('i').Strings()
 )
@@ -52,6 +53,10 @@ func main() {
 			Out:          *checkoutTo,
 			AllTemplates: *checkoutAll,
 			Templates:    *checkoutTemplates,
+		}
+		if err := c.Check(); err != nil {
+			log.Errorf("checkout: %s", err)
+			return
 		}
 		fn := mw.Recover(mw.StatusLog(shync.Checkout))
 		fn(c)
