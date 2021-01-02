@@ -8,11 +8,11 @@ How to use
 ==========
 
 ```
-# Download templates from Shopify to . directory
-% shync download .
+# Download email templates from Shopify to templates directory
+% shync download --to templates
 
-# Upload templates from . to Shopify
-% shync sync .
+# Upload email templates from templates directory to Shopify
+% shync sync --from templates
 ```
 
 Configuration

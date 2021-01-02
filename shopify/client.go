@@ -9,41 +9,26 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-var (
-	Templates = []string{
-		"order_confirmation",              // 注文の確認
-		"order_edited",                    // 注文の編集
-		"order_edit_invoice",              // 注文編集済みの請求書
-		"order_invoice",                   // 注文の請求書
-		"order_cancelled",                 // 注文のキャンセル
-		"refund_notification",             // 注文の返金
-		"draft_order_invoice",             // 下書き注文の請求書
-		"buy_online",                      // POSからのメールカート
-		"abandoned_checkout_notification", // カゴ落ち
-		"pos_exchange_receipt",            // POS交換レシート
-		"gift_card_notification",          // ギフトカードの作成
-		"failed_payment_processing",       // 支払いエラー
-		"fulfillment_request",             // フルフィルメントのリクエスト
-		"shipping_confirmation",           // 配送情報通知
-		"shipping_update",                 // 配送更新
-		"shipment_out_for_delivery",       // 配達中
-		"shipment_delivered",              // 配達済み
-		"local_out_for_delivery",          // 配達中
-		"local_delivered",                 // 配達済み
-		"local_missed_delivery",           // 不在配達
-		"ready_for_pickup",                // 受取の準備完了
-		"pickup_receipt",                  // 店頭受取済み
-		"customer_account_activate",       // お客様アカウントの招待
-		"customer_account_welcome",        // お客様アカウントへの挨拶
-		"customer_account_reset",          // お客様アカウントのパスワードのリセット
-		"customer_update_payment_method",  // お客様による決済方法更新のリクエスト
-		"contact_buyer",                   // お客様への連絡
-		"customer_marketing_confirmation", // 確認メール
-		"return_created",                  // 返品の手順
-		"return_label_notification",       // 返品用ラベルの手順
-		"new_order_notification",          // 新しい注文
+type Client struct {
+	ctx    context.Context
+	cancel func()
+
+	Location string
+}
+
+// head=false means headless
+func NewClient(head bool) *Client {
+	ctx, cancel := ChromeContext(head)
+	return &Client{
+		ctx:    ctx,
+		cancel: cancel,
 	}
-)
+}
+
+func (c *Client) Close() error {
+	c.cancel()
+	return nil
+}
 
 // head=false means headless
 func ChromeContext(head bool) (context.Context, func()) {
@@ -54,7 +39,7 @@ func ChromeContext(head bool) (context.Context, func()) {
 		ctx, cancel = chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
 	} else {
 		opts := append(chromedp.DefaultExecAllocatorOptions[:],
-			chromedp.Flag("headless", false), // headless=false に変更
+			chromedp.Flag("headless", false),
 			chromedp.Flag("disable-gpu", false),
 			chromedp.Flag("enable-automation", false),
 			chromedp.Flag("disable-extensions", false),
@@ -74,14 +59,14 @@ func ChromeContext(head bool) (context.Context, func()) {
 	return ctx, cancel
 }
 
-func Login(shop, username, password string, location *string) (chromedp.Tasks, error) {
+func (c *Client) Login(shop, username, password string) error {
 	submit := `//button[@type='submit']`
 	firstStore := `//input[@name='shop[domain]']`
 	secondEmail := `//input[@name='account[email]']`
 	thirdPassword := `//input[@name='account[password]']`
 	linkSettings := `//a[@href='/admin/settings']`
 
-	return chromedp.Tasks{
+	actions := chromedp.Tasks{
 		chromedp.Navigate(`https://accounts.shopify.com/store-login?new_store_login=true`),
 		chromedp.WaitVisible(firstStore),
 		chromedp.SendKeys(firstStore, shop),
@@ -96,13 +81,17 @@ func Login(shop, username, password string, location *string) (chromedp.Tasks, e
 		chromedp.Submit(submit),
 
 		chromedp.WaitVisible(linkSettings),
-		chromedp.Location(location),
-	}, nil
+		chromedp.Location(&c.Location),
+	}
+	if err := chromedp.Run(c.ctx, actions); err != nil {
+		return fmt.Errorf("Login: %w", err)
+	}
+	return nil
 }
 
 // id must be one of Templates
 // The email template body will be set to *body
-func FetchEmailTemplate(location, id string, subject, body *string) (chromedp.Tasks, error) {
+func (c *Client) FetchEmailTemplate(id string, subject, body *string) error {
 	found := false
 	for _, v := range Templates {
 		if v == id {
@@ -111,25 +100,29 @@ func FetchEmailTemplate(location, id string, subject, body *string) (chromedp.Ta
 	}
 	if !found {
 		// program error is fatal
-		return nil, fmt.Errorf("FetchEmailTemplate: invalid email template id: %s", id)
+		return fmt.Errorf("FetchEmailTemplate: invalid email template id: %s", id)
 	}
 
 	path, err := url.Parse(fmt.Sprintf("/admin/email_templates/%s/edit", id))
 	if err != nil {
-		return nil, fmt.Errorf("FetchEmailTemplate: %w", err)
+		return fmt.Errorf("FetchEmailTemplate: %w", err)
 	}
-	base, err := url.Parse(location)
+	base, err := url.Parse(c.Location)
 	if err != nil {
-		return nil, fmt.Errorf("FetchEmailTemplate: %w", err)
+		return fmt.Errorf("FetchEmailTemplate: %w", err)
 	}
 	next := base.ResolveReference(path)
 
 	input := `//input[@name='email_template[title]']`
 	textarea := `//textarea[@name='email_template[body_html]']`
-	return chromedp.Tasks{
+	actions := chromedp.Tasks{
 		chromedp.Navigate(next.String()),
 		chromedp.WaitVisible(textarea),
 		chromedp.Value(input, subject),
 		chromedp.Value(textarea, body),
-	}, nil
+	}
+	if err := chromedp.Run(c.ctx, actions); err != nil {
+		return fmt.Errorf("FetchEmailTemplate: %w", err)
+	}
+	return nil
 }
