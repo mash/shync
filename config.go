@@ -14,6 +14,7 @@ type Config struct {
 	In, Out                   string
 	AllTemplates              bool
 	Templates                 []string
+	Head                      bool // false = headless
 }
 
 func (c Config) Check() error {

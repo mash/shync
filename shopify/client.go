@@ -3,7 +3,6 @@ package shopify
 import (
 	"context"
 	"fmt"
-	glog "log"
 	"net/url"
 
 	"github.com/chromedp/chromedp"
@@ -37,7 +36,7 @@ func ChromeContext(head bool) (context.Context, func()) {
 	var cancel func()
 	if !head {
 		// headless
-		ctx, cancel = chromedp.NewContext(context.Background(), chromedp.WithDebugf(glog.Printf))
+		ctx, cancel = chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Debugfn))
 	} else {
 		opts := append(chromedp.DefaultExecAllocatorOptions[:],
 			chromedp.Flag("headless", false),
@@ -50,7 +49,7 @@ func ChromeContext(head bool) (context.Context, func()) {
 
 		allocCtx, cancel1 := chromedp.NewExecAllocator(context.Background(), opts...)
 
-		ctx_, cancel2 := chromedp.NewContext(allocCtx, chromedp.WithLogf(glog.Printf))
+		ctx_, cancel2 := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Debugfn))
 		ctx = ctx_
 		cancel = func() {
 			cancel1()

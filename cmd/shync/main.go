@@ -20,11 +20,12 @@ var (
 )
 
 var (
-	app      = kingpin.New("shync", "Shopify email template syncer")
-	logLevel = app.Flag("loglevel", "Log level (debug, info, error)").Default("info").Envar("SHYNC_LOGLEVEL").Enum("debug", "info", "error")
-	store    = app.Flag("store", "The Shopify store URL. eg: `https://{shopname}.myshopify.com`").Envar("SHYNC_STORE").String()
-	username = app.Flag("username", "The Shopify admin username").Envar("SHYNC_USERNAME").String()
-	password = app.Flag("password", "The Shopify admin password").Envar("SHYNC_PASSWORD").String()
+	app         = kingpin.New("shync", "Shopify email template syncer")
+	logLevel    = app.Flag("loglevel", "Log level (debug, info, error)").Default("info").Envar("SHYNC_LOGLEVEL").Enum("debug", "info", "error")
+	debugChrome = app.Flag("debug-chrome", "Use non headless Chrome").Bool()
+	store       = app.Flag("store", "The Shopify store URL. eg: `https://{shopname}.myshopify.com`").Envar("SHYNC_STORE").String()
+	username    = app.Flag("username", "The Shopify admin username").Envar("SHYNC_USERNAME").String()
+	password    = app.Flag("password", "The Shopify admin password").Envar("SHYNC_PASSWORD").String()
 
 	version = app.Command("version", "Show version")
 
@@ -58,6 +59,7 @@ func main() {
 			Out:          *checkoutTo,
 			AllTemplates: *checkoutAll,
 			Templates:    *checkoutTemplates,
+			Head:         *debugChrome,
 		}
 		if err := c.Check(); err != nil {
 			log.Errorf("checkout: %s", err)
@@ -73,6 +75,7 @@ func main() {
 			In:           *pushFrom,
 			AllTemplates: *pushAll,
 			Templates:    *pushTemplates,
+			Head:         *debugChrome,
 		}
 		if err := c.Check(); err != nil {
 			log.Errorf("push: %s", err)

@@ -76,6 +76,10 @@ func Debugf(format string, a ...interface{}) error {
 	return level.Debug(Logger).Log("msg", fmt.Sprintf(format, a...))
 }
 
+func Debugfn(format string, a ...interface{}) {
+	level.Debug(Logger).Log("msg", fmt.Sprintf(format, a...))
+}
+
 func Info(keyvals ...interface{}) error {
 	return level.Info(Logger).Log(keyvals...)
 }

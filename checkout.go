@@ -12,7 +12,7 @@ import (
 
 func Checkout(c Config) error {
 	log.Infof("opening Chrome")
-	client := shopify.NewClient(true)
+	client := shopify.NewClient(c.Head)
 	// you might want to skip cancel() to keep the browser window around
 	if false {
 		defer client.Close()
