@@ -30,10 +30,15 @@ var (
 
 	ids = app.Command("ids", "Show email template ids")
 
-	checkout          = app.Command("checkout", "Download email templates into a directory")
+	checkout          = app.Command("checkout", "Checkout email templates into a directory")
 	checkoutTo        = checkout.Arg("to", "Output directory, or - for stdout").Default(".").Envar("SHYNC_OUTDIR").String()
-	checkoutAll       = checkout.Flag("all", "Download all email templates").Short('a').Bool()
-	checkoutTemplates = checkout.Flag("id", "Email template identifier to download").Short('i').Strings()
+	checkoutAll       = checkout.Flag("all", "Checkout all email templates").Short('a').Bool()
+	checkoutTemplates = checkout.Flag("id", "Email template identifier to checkout").Short('i').Strings()
+
+	push          = app.Command("push", "Push email templates to Shopify")
+	pushFrom      = push.Arg("from", "Input directory where the email templates exist").Default(".").Envar("SHYNC_INDIR").String()
+	pushAll       = push.Flag("all", "Push all email templates").Short('a').Bool()
+	pushTemplates = push.Flag("id", "Email template identifier to push").Short('i').Strings()
 )
 
 func main() {
@@ -59,6 +64,26 @@ func main() {
 			return
 		}
 		fn := mw.Recover(mw.StatusLog(shync.Checkout))
+		fn(c)
+	case push.FullCommand():
+		c := shync.Config{
+			Store:        *store,
+			Username:     *username,
+			Password:     *password,
+			In:           *pushFrom,
+			AllTemplates: *pushAll,
+			Templates:    *pushTemplates,
+		}
+		if err := c.Check(); err != nil {
+			log.Errorf("push: %s", err)
+			return
+		}
+		// fail fast
+		if err := c.CheckReadable(); err != nil {
+			log.Errorf("push: %s", err)
+			return
+		}
+		fn := mw.Recover(mw.StatusLog(shync.Push))
 		fn(c)
 	}
 }

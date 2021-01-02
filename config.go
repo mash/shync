@@ -2,6 +2,8 @@ package shync
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/mash/shync/log"
 	"github.com/mash/shync/shopify"
@@ -42,6 +44,31 @@ func (c Config) Check() error {
 		}
 	}
 	return nil
+}
+
+func (c Config) CheckReadable() error {
+	for _, id := range c.Ids() {
+		f, err := os.Open(c.SubjectFile(id))
+		if err != nil {
+			return err
+		}
+		f.Close()
+
+		f, err = os.Open(c.BodyFile(id))
+		if err != nil {
+			return err
+		}
+		f.Close()
+	}
+	return nil
+}
+
+func (c Config) SubjectFile(id string) string {
+	return filepath.Join(c.Out, fmt.Sprintf("%s.txt", id))
+}
+
+func (c Config) BodyFile(id string) string {
+	return filepath.Join(c.Out, fmt.Sprintf("%s.html", id))
 }
 
 func (c Config) Ids() []string {
