@@ -16,7 +16,6 @@ import (
 var (
 	Version   string
 	BuildDate string
-	GoVersion string
 )
 
 var (
@@ -43,7 +42,7 @@ var (
 )
 
 func main() {
-	log.Info("version", Version, "buildDate", BuildDate, "goVersion", GoVersion)
+	log.Info("version", Version, "buildDate", BuildDate)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case version.FullCommand():
 		break
