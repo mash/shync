@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/mash/shync/log"
 	"github.com/mash/shync/shopify"
@@ -42,12 +41,12 @@ func checkoutSingle(c Config, client *shopify.Client, id string) error {
 }
 
 func write(c Config, id, subject, body string) error {
-	if c.Out == "-" {
+	if c.Dir == "-" {
 		fmt.Println(body)
 		return nil
 	}
-	subjectFile := filepath.Join(c.Out, fmt.Sprintf("%s.txt", id))
-	bodyFile := filepath.Join(c.Out, fmt.Sprintf("%s.html", id))
+	subjectFile := c.SubjectFile(id)
+	bodyFile := c.BodyFile(id)
 
 	sf, err := os.Create(subjectFile)
 	if err != nil {

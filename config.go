@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Store, Username, Password string
-	In, Out                   string
+	Dir                       string
 	AllTemplates              bool
 	Templates                 []string
 	Head                      bool // false = headless
@@ -33,7 +33,7 @@ func (c Config) Check() error {
 	if !c.AllTemplates && len(c.Templates) == 0 {
 		return fmt.Errorf("config: at least one email template id is required")
 	}
-	if c.Out == "-" {
+	if c.Dir == "-" {
 		if c.AllTemplates || len(c.Templates) > 1 {
 			return fmt.Errorf("config: writing multiple email templates to stdout is not supported (why would you do that?)")
 		}
@@ -65,11 +65,11 @@ func (c Config) CheckReadable() error {
 }
 
 func (c Config) SubjectFile(id string) string {
-	return filepath.Join(c.Out, fmt.Sprintf("%s.txt", id))
+	return filepath.Join(c.Dir, fmt.Sprintf("%s.txt", id))
 }
 
 func (c Config) BodyFile(id string) string {
-	return filepath.Join(c.Out, fmt.Sprintf("%s.html", id))
+	return filepath.Join(c.Dir, fmt.Sprintf("%s.html", id))
 }
 
 func (c Config) Ids() []string {

@@ -31,12 +31,12 @@ var (
 	ids = app.Command("ids", "Show email template ids")
 
 	checkout          = app.Command("checkout", "Checkout email templates into a directory")
-	checkoutTo        = checkout.Arg("to", "Output directory, or - for stdout").Default(".").Envar("SHYNC_OUTDIR").String()
+	checkoutDir       = checkout.Arg("dir", "Output directory, or - for stdout").Default(".").Envar("SHYNC_DIR").String()
 	checkoutAll       = checkout.Flag("all", "Checkout all email templates").Short('a').Bool()
 	checkoutTemplates = checkout.Flag("id", "Email template identifier to checkout").Short('i').Strings()
 
 	push          = app.Command("push", "Push email templates to Shopify")
-	pushFrom      = push.Arg("from", "Input directory where the email templates exist").Default(".").Envar("SHYNC_INDIR").String()
+	pushDir       = push.Arg("dir", "Input directory where the email templates exist").Default(".").Envar("SHYNC_DIR").String()
 	pushAll       = push.Flag("all", "Push all email templates").Short('a').Bool()
 	pushTemplates = push.Flag("id", "Email template identifier to push").Short('i').Strings()
 )
@@ -55,7 +55,7 @@ func main() {
 			Store:        *store,
 			Username:     *username,
 			Password:     *password,
-			Out:          *checkoutTo,
+			Dir:          *checkoutDir,
 			AllTemplates: *checkoutAll,
 			Templates:    *checkoutTemplates,
 			Head:         *debugChrome,
@@ -71,7 +71,7 @@ func main() {
 			Store:        *store,
 			Username:     *username,
 			Password:     *password,
-			In:           *pushFrom,
+			Dir:          *pushDir,
 			AllTemplates: *pushAll,
 			Templates:    *pushTemplates,
 			Head:         *debugChrome,
