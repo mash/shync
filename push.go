@@ -23,7 +23,7 @@ func Push(c Config) error {
 	}
 
 	for _, id := range c.Ids() {
-		log.Infof("pushing %s", id)
+		log.Infof("working on %s", id)
 		if err := pushSingle(c, client, id); err != nil {
 			return fmt.Errorf("Push: failed processing: %s, error: %w", id, err)
 		}
@@ -33,8 +33,22 @@ func Push(c Config) error {
 
 func pushSingle(c Config, client *shopify.Client, id string) error {
 	var subject, body string
-	if err := read(c, id, &subject, &body); err != nil {
-		return err
+	if err := read(c, c.SubjectFile(id), &subject); err != nil {
+		if c.IgnoreMissing {
+			log.Infof("%s not found, ignoring", c.SubjectFile(id))
+		} else {
+			return err
+		}
+	}
+	if err := read(c, c.BodyFile(id), &body); err != nil {
+		if c.IgnoreMissing {
+			log.Infof("%s not found, ignoring", c.BodyFile(id))
+		} else {
+			return err
+		}
+	}
+	if subject == "" && body == "" {
+		return nil
 	}
 	if err := client.UpdateEmailTemplate(shopify.Templates[0], subject, body); err != nil {
 		return err
@@ -42,20 +56,11 @@ func pushSingle(c Config, client *shopify.Client, id string) error {
 	return nil
 }
 
-func read(c Config, id string, subject, body *string) error {
-	subjectFile := c.SubjectFile(id)
-	bodyFile := c.BodyFile(id)
-
-	b, err := ioutil.ReadFile(subjectFile)
+func read(c Config, file string, content *string) error {
+	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
-	*subject = string(b)
-
-	b, err = ioutil.ReadFile(bodyFile)
-	if err != nil {
-		return err
-	}
-	*body = string(b)
+	*content = string(b)
 	return nil
 }

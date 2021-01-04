@@ -114,9 +114,14 @@ func (c *Client) FetchEmailTemplate(id string, subject, body *string) error {
 // id must be one of Templates.
 // *body will be set to the email template body.
 func (c *Client) UpdateEmailTemplate(id, subject, body string) error {
+	if subject == "" && body == "" {
+		log.Infof("nothing to do for %s", id)
+		return nil
+	}
+
 	next, err := c.URL(id)
 	if err != nil {
-		return fmt.Errorf("FetchEmailTemplate: %w", err)
+		return fmt.Errorf("UpdateEmailTemplate: %w", err)
 	}
 
 	input := `//input[@name='email_template[title]']`
@@ -132,19 +137,27 @@ func (c *Client) UpdateEmailTemplate(id, subject, body string) error {
 		chromedp.Value(textarea, &currentBody),
 	}
 	if err := chromedp.Run(c.ctx, actions); err != nil {
-		return fmt.Errorf("FetchEmailTemplate: %w", err)
+		return fmt.Errorf("UpdateEmailTemplate: %w", err)
 	}
-	if currentSubject != subject || currentBody != body {
-		actions = chromedp.Tasks{
-			chromedp.SetValue(input, subject),
-			chromedp.SetValue(textarea, body),
-			chromedp.Submit(save),
-		}
-		if err := chromedp.Run(c.ctx, actions); err != nil {
-			return fmt.Errorf("FetchEmailTemplate: %w", err)
-		}
-	} else {
+
+	if currentSubject == subject && currentBody == body {
 		log.Infof("no change found in %s", id)
+		return nil
+	}
+
+	actions = chromedp.Tasks{}
+	if currentSubject != subject && subject != "" {
+		log.Infof("pushing %s subject", id)
+		actions = append(actions, chromedp.SetValue(input, subject))
+	}
+	if currentBody != body && body != "" {
+		log.Infof("pushing %s body", id)
+		actions = append(actions, chromedp.SetValue(textarea, body))
+	}
+	actions = append(actions, chromedp.Submit(save))
+
+	if err := chromedp.Run(c.ctx, actions); err != nil {
+		return fmt.Errorf("UpdateEmailTemplate: %w", err)
 	}
 	return nil
 }

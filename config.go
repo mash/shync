@@ -10,11 +10,11 @@ import (
 )
 
 type Config struct {
-	Store, Username, Password string
-	Dir                       string
-	AllTemplates              bool
-	Templates                 []string
-	Head                      bool // false = headless
+	Store, Username, Password   string
+	Dir                         string
+	AllTemplates, IgnoreMissing bool
+	Templates                   []string
+	Head                        bool // false = headless
 }
 
 func (c Config) Check() error {
@@ -32,6 +32,9 @@ func (c Config) Check() error {
 	}
 	if !c.AllTemplates && len(c.Templates) == 0 {
 		return fmt.Errorf("config: at least one email template id is required")
+	}
+	if c.IgnoreMissing && !c.AllTemplates {
+		return fmt.Errorf("config: --ignore-missing is only valid when --all is enabled")
 	}
 	if c.Dir == "-" {
 		if c.AllTemplates || len(c.Templates) > 1 {

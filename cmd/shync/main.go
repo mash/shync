@@ -35,10 +35,11 @@ var (
 	checkoutAll       = checkout.Flag("all", "Checkout all email templates").Short('a').Bool()
 	checkoutTemplates = checkout.Flag("id", "Email template identifier to checkout").Short('i').Strings()
 
-	push          = app.Command("push", "Push email templates to Shopify")
-	pushDir       = push.Arg("dir", "Input directory where the email templates exist").Default(".").Envar("SHYNC_DIR").String()
-	pushAll       = push.Flag("all", "Push all email templates").Short('a').Bool()
-	pushTemplates = push.Flag("id", "Email template identifier to push").Short('i').Strings()
+	push              = app.Command("push", "Push email templates to Shopify")
+	pushDir           = push.Arg("dir", "Input directory where the email templates exist").Default(".").Envar("SHYNC_DIR").String()
+	pushAll           = push.Flag("all", "Push all email templates").Short('a').Bool()
+	pushTemplates     = push.Flag("id", "Email template identifier to push").Short('i').Strings()
+	pushIgnoreMissing = push.Flag("ignore-missing", "When --all is enabled, ignore missing email template subjects and bodies in the directory, and only push the files that exist").Bool()
 )
 
 func main() {
@@ -68,22 +69,25 @@ func main() {
 		fn(c)
 	case push.FullCommand():
 		c := shync.Config{
-			Store:        *store,
-			Username:     *username,
-			Password:     *password,
-			Dir:          *pushDir,
-			AllTemplates: *pushAll,
-			Templates:    *pushTemplates,
-			Head:         *debugChrome,
+			Store:         *store,
+			Username:      *username,
+			Password:      *password,
+			Dir:           *pushDir,
+			AllTemplates:  *pushAll,
+			IgnoreMissing: *pushIgnoreMissing,
+			Templates:     *pushTemplates,
+			Head:          *debugChrome,
 		}
 		if err := c.Check(); err != nil {
 			log.Errorf("push: %s", err)
 			return
 		}
 		// fail fast
-		if err := c.CheckReadable(); err != nil {
-			log.Errorf("push: %s", err)
-			return
+		if !c.AllTemplates || !c.IgnoreMissing {
+			if err := c.CheckReadable(); err != nil {
+				log.Errorf("push: %s", err)
+				return
+			}
 		}
 		fn := mw.Recover(mw.StatusLog(shync.Push))
 		fn(c)
