@@ -50,7 +50,7 @@ func pushSingle(c Config, client *shopify.Client, id string) error {
 	if subject == "" && body == "" {
 		return nil
 	}
-	if err := client.UpdateEmailTemplate(shopify.Templates[0], subject, body); err != nil {
+	if err := client.UpdateEmailTemplate(id, subject, body); err != nil {
 		return err
 	}
 	return nil

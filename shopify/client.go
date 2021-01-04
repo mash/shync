@@ -126,13 +126,13 @@ func (c *Client) UpdateEmailTemplate(id, subject, body string) error {
 
 	input := `//input[@name='email_template[title]']`
 	textarea := `//textarea[@name='email_template[body_html]']`
-	save := `//button[@name='button']`
+	form := `//form[@id='edit_email_template']`
 
 	var currentSubject, currentBody string
 
 	actions := chromedp.Tasks{
 		chromedp.Navigate(next),
-		chromedp.WaitVisible(textarea),
+		chromedp.WaitReady(form),
 		chromedp.Value(input, &currentSubject),
 		chromedp.Value(textarea, &currentBody),
 	}
@@ -154,8 +154,9 @@ func (c *Client) UpdateEmailTemplate(id, subject, body string) error {
 		log.Infof("pushing %s body", id)
 		actions = append(actions, chromedp.SetValue(textarea, body))
 	}
-	actions = append(actions, chromedp.Submit(save))
-
+	actions = append(actions,
+		chromedp.Submit(form),
+		chromedp.WaitVisible(form))
 	if err := chromedp.Run(c.ctx, actions); err != nil {
 		return fmt.Errorf("UpdateEmailTemplate: %w", err)
 	}
