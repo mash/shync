@@ -61,24 +61,24 @@ func ChromeContext(head bool) (context.Context, func()) {
 
 func (c *Client) Login(shop, username, password string) error {
 	submit := `//button[@type='submit']`
-	firstStore := `//input[@name='shop[domain]']`
-	secondEmail := `//input[@name='account[email]']`
-	thirdPassword := `//input[@name='account[password]']`
+	selectStore := `//a[contains(@href,'`+shop+`')]`
+	emailInput := `//input[@name='account[email]']`
+	passwordInput := `//input[@name='account[password]']`
 	linkSettings := `//a[@href='/admin/settings']`
 
 	actions := chromedp.Tasks{
 		chromedp.Navigate(`https://accounts.shopify.com/store-login?new_store_login=true`),
-		chromedp.WaitVisible(firstStore),
-		chromedp.SendKeys(firstStore, shop),
+
+		chromedp.WaitVisible(emailInput),
+		chromedp.SendKeys(emailInput, username),
 		chromedp.Submit(submit),
 
-		chromedp.WaitVisible(secondEmail),
-		chromedp.SendKeys(secondEmail, username),
+		chromedp.WaitVisible(passwordInput),
+		chromedp.SendKeys(passwordInput, password),
 		chromedp.Submit(submit),
 
-		chromedp.WaitVisible(thirdPassword),
-		chromedp.SendKeys(thirdPassword, password),
-		chromedp.Submit(submit),
+		chromedp.WaitVisible(selectStore),
+		chromedp.Click(selectStore),
 
 		chromedp.WaitVisible(linkSettings),
 		chromedp.Location(&c.Location),
